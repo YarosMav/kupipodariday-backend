@@ -19,12 +19,6 @@ import type { RequestWithUser } from 'src/utils/types';
 export class WishesController {
   constructor(private readonly wishesService: WishesService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  create(@Req() req: RequestWithUser, @Body() createWishDto: CreateWishDto) {
-    return this.wishesService.create(createWishDto, req.user);
-  }
-
   @Get('last')
   findLast() {
     return this.wishesService.findLast();
@@ -35,8 +29,14 @@ export class WishesController {
     return this.wishesService.findTop();
   }
 
-  @Get(':id')
   @UseGuards(JwtAuthGuard)
+  @Post()
+  create(@Req() req: RequestWithUser, @Body() createWishDto: CreateWishDto) {
+    return this.wishesService.create(createWishDto, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
   findOne(@Param('id') id: number) {
     return this.wishesService.findOne(id);
   }

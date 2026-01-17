@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { FindOneOptions, Repository } from 'typeorm';
+import { FindOneOptions, ILike, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Wish } from 'src/wishes/entities/wish.entity';
 
@@ -31,16 +35,35 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
+    // Создаем объект пользователя из DTO с хешированным паролем
     const user = this.userRepository.create({
       ...createUserDto,
       password: hashedPassword,
     });
-    return await this.userRepository.save(user);
+
+    try {
+      // Сохраняем именно созданный объект 'user'
+      const savedUser = await this.userRepository.save(user);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = savedUser;
+      return result;
+    } catch (error) {
+      // 23505 - код нарушения уникальности в PostgreSQL
+      if ((error as { code: string }).code === '23505') {
+        throw new ConflictException(
+          'Пользователь с таким email или username уже существует',
+        );
+      }
+      throw error;
+    }
   }
 
   async findMany(query: string): Promise<User[]> {
     return this.userRepository.find({
-      where: [{ username: query }, { email: query }],
+      where: [
+        { username: ILike(`%${query}%`) },
+        { email: ILike(`%${query}%`) },
+      ],
       select: ['id', 'username', 'about', 'avatar', 'createdAt', 'updatedAt'],
     });
   }

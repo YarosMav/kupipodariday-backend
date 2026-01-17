@@ -16,6 +16,7 @@ import { UpdateWishlistDto } from './dto/update-wishlist.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { RequestWithUser } from 'src/utils/types';
 
+@UseGuards(JwtAuthGuard)
 @Controller('wishlistlists') // В ТЗ часто эндпоинт называется именно так, проверь документацию API
 export class WishlistsController {
   constructor(private readonly wishlistsService: WishlistsService) {}
@@ -25,7 +26,6 @@ export class WishlistsController {
     return this.wishlistsService.findMany({ relations: ['owner', 'items'] });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   create(
     @Req() req: RequestWithUser,
@@ -43,7 +43,6 @@ export class WishlistsController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Req() req: RequestWithUser,
@@ -54,7 +53,6 @@ export class WishlistsController {
     return this.wishlistsService.updateWithCheck(id, updateDto, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Req() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
     // Вызываем метод с проверкой прав

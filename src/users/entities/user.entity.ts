@@ -20,6 +20,7 @@ export class User extends BaseEntity {
   @IsUrl()
   avatar: string;
 
+  @Exclude({ toPlainOnly: true })
   @Column({ unique: true })
   @IsEmail()
   email: string;
